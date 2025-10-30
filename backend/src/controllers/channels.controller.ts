@@ -3,6 +3,7 @@ import { unipileService } from '../services/unipile.service';
 import { pool } from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { getUserUniPileService, getUserWhatsAppPhone } from './user-credentials.controller';
+import { getJson, setJson } from '../services/cache';
 
 /**
  * Get all connected accounts for a provider
@@ -78,6 +79,13 @@ export async function getAccounts(req: AuthRequest, res: Response) {
     const provider = urlParts[urlParts.indexOf('channels') + 1];
     const userId = req.user?.id || 'user_123'; // Use authenticated user ID
 
+    // Try cache first
+    const cacheKey = `accounts:${userId}:${provider}`;
+    const cached = await getJson<any[]>(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
     // Get accounts from database
     const result = await pool.query(
       'SELECT * FROM channels_account WHERE user_id = $1 AND provider = $2',
@@ -90,10 +98,9 @@ export async function getAccounts(req: AuthRequest, res: Response) {
         // Get user-specific UniPile service
         const userUniPileService = await getUserUniPileService(userId);
         if (!userUniPileService) {
-          return res.status(400).json({ 
-            error: 'No UniPile credentials found', 
-            message: 'Please configure your UniPile API credentials first' 
-          });
+          console.log(`⚠️ No UniPile credentials found for user ${userId}, skipping UniPile accounts`);
+          // Return empty array instead of error for missing UniPile credentials
+          return res.json([]);
         }
 
         const unipileAccounts = await userUniPileService.getAccounts();
@@ -131,6 +138,7 @@ export async function getAccounts(req: AuthRequest, res: Response) {
         console.log(`📋 Showing ${accountsWithStatus.length} ${provider} accounts for user ${userId}`);
         console.log(`🔍 DEBUG: Database returned ${result.rows.length} rows for user ${userId}`);
         console.log(`🔍 DEBUG: Final accounts to return:`, accountsWithStatus.map(a => a.id));
+        await setJson(cacheKey, accountsWithStatus, 30); // cache for 30s
         return res.json(accountsWithStatus);
       } catch (error: any) {
         console.error('UniPile error:', error);
@@ -141,6 +149,7 @@ export async function getAccounts(req: AuthRequest, res: Response) {
       }
     }
 
+    await setJson(cacheKey, result.rows, 30);
     res.json(result.rows);
   } catch (error: any) {
     console.error('Get accounts error:', error);
@@ -163,10 +172,9 @@ export async function connectAccount(req: AuthRequest, res: Response) {
         // Get user-specific UniPile service
         const userUniPileService = await getUserUniPileService(userId);
         if (!userUniPileService) {
-          return res.status(400).json({ 
-            error: 'No UniPile credentials found', 
-            message: 'Please configure your UniPile API credentials first' 
-          });
+          console.log(`⚠️ No UniPile credentials found for user ${userId}, skipping UniPile accounts`);
+          // Return empty array instead of error for missing UniPile credentials
+          return res.json([]);
         }
 
         // Get actual accounts from user's UniPile

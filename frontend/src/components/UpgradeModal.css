@@ -1,0 +1,264 @@
+.upgrade-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.upgrade-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.upgrade-modal-header {
+  padding: 24px 24px 0 24px;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.upgrade-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.feature-icon {
+  font-size: 32px;
+}
+
+.upgrade-modal-title h2 {
+  margin: 0;
+  color: #212529;
+  font-size: 28px;
+}
+
+.upgrade-reason {
+  color: #6c757d;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.upgrade-modal-content {
+  padding: 24px;
+}
+
+.plan-toggle {
+  display: flex;
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.plan-toggle-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.plan-toggle-btn.active {
+  background: white;
+  color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.selected-plan-details {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.plan-header h3 {
+  margin: 0;
+  color: #212529;
+  font-size: 24px;
+}
+
+.plan-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.plan-features {
+  display: grid;
+  gap: 8px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feature-check {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.addons-section {
+  margin-bottom: 24px;
+}
+
+.addons-section h4 {
+  margin: 0 0 16px 0;
+  color: #212529;
+}
+
+.addons-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.addon-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.addon-item:hover {
+  border-color: #007bff;
+}
+
+.addon-item input:checked + .addon-content {
+  color: #007bff;
+}
+
+.addon-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.addon-icon {
+  font-size: 24px;
+}
+
+.addon-name {
+  font-weight: 500;
+}
+
+.addon-price {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.comparison-link {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.plan-comparison-section {
+  margin-top: 24px;
+  border-top: 1px solid #e9ecef;
+  padding-top: 24px;
+}
+
+.upgrade-modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 12px 24px;
+  border: 1px solid #6c757d;
+  background: white;
+  color: #6c757d;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-upgrade {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.btn-upgrade:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-upgrade:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

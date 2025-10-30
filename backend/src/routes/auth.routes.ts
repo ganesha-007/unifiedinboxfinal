@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { generateTestToken } from '../middleware/auth';
-import { initiateGmailAuth, handleGmailCallback } from '../controllers/gmail.controller';
+import { initiateGmailAuth, handleGmailCallback, getUserEmailLimits } from '../controllers/gmail.controller';
 import { initiateOutlookAuth, handleOutlookCallback } from '../controllers/outlook.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -76,6 +76,11 @@ router.get('/gmail/callback', handleGmailCallback);
  */
 router.get('/outlook', authenticate, initiateOutlookAuth);
 router.get('/outlook/callback', handleOutlookCallback);
+
+/**
+ * User-specific email limits endpoint
+ */
+router.get('/me/limits/email', authenticate, getUserEmailLimits);
 
 export default router;
 

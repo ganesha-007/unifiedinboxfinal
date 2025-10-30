@@ -1,6 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// Normalize API base URL so that '/api' path is always present, regardless of env value
+const RAW_API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = RAW_API_BASE.endsWith('/api') ? RAW_API_BASE : `${RAW_API_BASE.replace(/\/$/, '')}/api`;
+
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,

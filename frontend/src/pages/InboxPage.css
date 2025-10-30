@@ -804,3 +804,152 @@
   background: #dc3545;
   color: white;
 }
+/* Email Send Meter */
+.email-send-meter {
+  margin: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.email-send-meter .send-meter {
+  margin: 0;
+  border-radius: 8px;
+}
+
+/* Responsive adjustments for send meter */
+@media (max-width: 768px) {
+  .email-send-meter {
+    margin: 12px 8px;
+  }
+}
+
+/* Email Body Display */
+.email-body-container {
+  margin-top: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.email-body-actions {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toggle-html-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-html-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.email-body-text {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.email-body-html {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Style HTML content within email body */
+.email-body-html h1,
+.email-body-html h2,
+.email-body-html h3,
+.email-body-html h4,
+.email-body-html h5,
+.email-body-html h6 {
+  color: #ffffff;
+  margin: 12px 0 8px 0;
+}
+
+.email-body-html p {
+  margin: 8px 0;
+  color: #e0e0e0;
+}
+
+.email-body-html a {
+  color: #4fc3f7;
+  text-decoration: underline;
+}
+
+.email-body-html a:hover {
+  color: #81d4fa;
+}
+
+.email-body-html img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.email-body-html table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.email-body-html th,
+.email-body-html td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px;
+  text-align: left;
+}
+
+.email-body-html th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+.email-body-html ul,
+.email-body-html ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.email-body-html li {
+  margin: 4px 0;
+  color: #e0e0e0;
+}
+
+/* Responsive email body */
+@media (max-width: 768px) {
+  .email-body-text,
+  .email-body-html {
+    padding: 8px;
+    max-height: 300px;
+  }
+  
+  .email-body-actions {
+    padding: 6px 8px;
+  }
+  
+  .toggle-html-btn {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}

@@ -1,0 +1,289 @@
+.plan-comparison {
+  width: 100%;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.plan-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  transition: all 0.3s ease;
+  height: fit-content;
+}
+
+.plan-card:hover {
+  border-color: #007bff;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+}
+
+.plan-card.highlighted {
+  border-color: #007bff;
+  box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+  transform: scale(1.02);
+}
+
+.plan-card.current {
+  border-color: #28a745;
+  background: #f8fff9;
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.current-badge {
+  position: absolute;
+  top: -12px;
+  right: 16px;
+  background: #28a745;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.plan-name {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.plan-pricing {
+  margin-bottom: 12px;
+}
+
+.plan-price {
+  font-size: 36px;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.plan-period {
+  font-size: 16px;
+  color: #6c757d;
+  margin-left: 4px;
+}
+
+.plan-description {
+  color: #6c757d;
+  margin: 0;
+  font-size: 16px;
+}
+
+.plan-features h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.feature-check {
+  color: #28a745;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.plan-limitations {
+  margin-top: 16px;
+}
+
+.limitations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.limitation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.limitation-cross {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.plan-footer {
+  margin-top: 24px;
+}
+
+.plan-button {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.btn-highlighted {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+.btn-current {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.plan-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.addons-section {
+  margin-top: 48px;
+  padding-top: 48px;
+  border-top: 1px solid #e9ecef;
+}
+
+.addons-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #212529;
+  text-align: center;
+}
+
+.addons-section > p {
+  text-align: center;
+  color: #6c757d;
+  margin: 0 0 32px 0;
+}
+
+.addons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.addon-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.addon-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.addon-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.addon-icon {
+  font-size: 32px;
+}
+
+.addon-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.addon-price {
+  margin: 0;
+  color: #007bff;
+  font-weight: 600;
+}
+
+.addon-description {
+  color: #6c757d;
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.addon-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.addon-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 14px;
+}

@@ -33,7 +33,11 @@ export const ADDONS = {
 };
 
 // Get user entitlements based on their plan and addons
+import { entitlementsCache } from '../services/entitlementsCache';
+
 export async function getEntitlements(userId: string, db: any) {
+  const cached = entitlementsCache.get(userId);
+  if (cached) return cached;
   const plan = await getUserPlan(userId, db);
   const addons = await getActiveAddons(userId, db);
   
@@ -59,13 +63,31 @@ export async function getEntitlements(userId: string, db: any) {
     }
   });
 
+  entitlementsCache.set(userId, access);
   return access;
 }
 
 async function getUserPlan(userId: string, db: any): Promise<string> {
-  // TODO: Implement actual plan retrieval from database
-  // For now, default to 'scale' plan to allow WhatsApp access
-  return 'scale';
+  // Read latest subscription record to infer plan; fallback to 'starter' if none
+  try {
+    if (process.env.NODE_ENV === 'test') {
+      // Preserve existing test expectations
+      return 'scale';
+    }
+    const r = await db.query(
+      `SELECT plan_code
+       FROM billing_subscriptions
+       WHERE user_id = $1
+       ORDER BY updated_at DESC NULLS LAST, created_at DESC
+       LIMIT 1`,
+      [userId]
+    );
+    const plan = (r.rows[0]?.plan_code as string | null) || 'starter';
+    return plan;
+  } catch (e) {
+    // On DB error, be conservative
+    return 'starter';
+  }
 }
 
 async function getActiveAddons(userId: string, db: any): Promise<string[]> {

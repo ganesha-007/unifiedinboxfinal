@@ -10,6 +10,15 @@ export interface AuthRequest extends Request {
 
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   try {
+    // Internal job bypass using shared token
+    const internalToken = req.headers['x-internal-job'] as string | undefined;
+    const expected = process.env.INTERNAL_JOB_TOKEN;
+    if (internalToken && expected && internalToken === expected) {
+      const internalUser = (req.headers['x-internal-user'] as string) || 'system';
+      req.user = { id: internalUser, email: `${internalUser}@internal` };
+      return next();
+    }
+
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -17,7 +26,8 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
     }
 
     const token = authHeader.substring(7);
-    const secret = process.env.JWT_SECRET;
+    // Allow a safe development fallback secret to avoid blocking local login
+    const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev_secret_change_me' : '');
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is required');
     }
@@ -37,7 +47,8 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 
 // Generate a test JWT token for development
 export function generateTestToken(userId: string, email: string): string {
-  const secret = process.env.JWT_SECRET;
+  // Allow a safe development fallback secret to avoid blocking local login
+  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'dev_secret_change_me' : '');
   if (!secret) {
     throw new Error('JWT_SECRET environment variable is required');
   }

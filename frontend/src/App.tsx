@@ -5,7 +5,13 @@ import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import ConnectionsPage from './pages/ConnectionsPage';
 import InboxPage from './pages/InboxPage';
+import UsageAnalyticsPage from './pages/UsageAnalyticsPage';
+import BillingPage from './pages/BillingPage';
+import BillingSuccessPage from './pages/BillingSuccessPage';
+import BillingCancelPage from './pages/BillingCancelPage';
+import EntitlementTestPage from './pages/EntitlementTestPage';
 import './App.css';
+import AdminLimitsPage from './pages/AdminLimitsPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -52,6 +58,33 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/analytics"
+        element={
+          <PrivateRoute>
+            <UsageAnalyticsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/settings/billing"
+        element={
+          <PrivateRoute>
+            <BillingPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin/limits"
+        element={
+          <PrivateRoute>
+            <AdminLimitsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route path="/billing/success" element={<BillingSuccessPage />} />
+      <Route path="/billing/cancel" element={<BillingCancelPage />} />
+      <Route path="/test/entitlements" element={<EntitlementTestPage />} />
       <Route path="/" element={<Navigate to="/connections" />} />
     </Routes>
   );

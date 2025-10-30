@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { channelsService, Account, Chat, Message } from '../services/channels.service';
 import { gmailService } from '../services/gmail.service';
 import { outlookService } from '../services/outlook.service';
+import SendMeter from '../components/SendMeter';
 import './InboxPage.css';
 
 const InboxPage: React.FC = () => {
   const { user, logout, socket } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
@@ -20,7 +22,10 @@ const InboxPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCounts, setUnreadCounts] = useState<{[chatId: string]: number}>({});
-  const [selectedProvider, setSelectedProvider] = useState<'whatsapp' | 'instagram' | 'email' | 'outlook'>('whatsapp');
+  const [selectedProvider, setSelectedProvider] = useState<'whatsapp' | 'instagram' | 'email' | 'outlook'>(
+    (searchParams.get('provider') as 'whatsapp' | 'instagram' | 'email' | 'outlook') || 'whatsapp'
+  );
+  const [showRawHtml, setShowRawHtml] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -528,6 +533,36 @@ const InboxPage: React.FC = () => {
     );
   };
 
+  // Function to safely render HTML content
+  const renderEmailBody = (body: string) => {
+    if (!body) return 'No content';
+    
+    // Check if the body contains HTML tags
+    const hasHtmlTags = /<[^>]*>/g.test(body);
+    
+    if (!hasHtmlTags || showRawHtml) {
+      // Display as plain text
+      return (
+        <div className="email-body-text" style={{ whiteSpace: 'pre-wrap' }}>
+          {body}
+        </div>
+      );
+    }
+    
+    // Display as HTML (safely)
+    return (
+      <div 
+        className="email-body-html"
+        dangerouslySetInnerHTML={{ __html: body }}
+        style={{
+          maxWidth: '100%',
+          overflow: 'hidden',
+          wordWrap: 'break-word'
+        }}
+      />
+    );
+  };
+
   const filteredChats = chats.filter(chat => 
     chat.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -669,6 +704,15 @@ const InboxPage: React.FC = () => {
               </div>
             </div>
             <div className="header-actions">
+              <button 
+                className="icon-btn" 
+                title="Analytics"
+                onClick={() => navigate('/analytics')}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4-6h2v20h-2V1zm4 4h2v16h-2V5zm4 2h2v14h-2V7z"/>
+                </svg>
+              </button>
               <button className="icon-btn" title="Status">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
@@ -854,6 +898,14 @@ const InboxPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Send Meter for Email Accounts */}
+            {selectedProvider === 'email' && selectedAccount && (
+              <SendMeter 
+                accountId={selectedAccount.id as string}
+                className="email-send-meter"
+              />
+            )}
+
             {/* Messages Area */}
             <div className="messages-container">
               {selectedProvider === 'email' ? (
@@ -894,7 +946,18 @@ const InboxPage: React.FC = () => {
                           })()}
                         </div>
                       )}
-                      <div className="email-body" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</div>
+                      <div className="email-body-container">
+                        <div className="email-body-actions">
+                          <button 
+                            className="toggle-html-btn"
+                            onClick={() => setShowRawHtml(!showRawHtml)}
+                            title={showRawHtml ? 'Show formatted view' : 'Show raw HTML'}
+                          >
+                            {showRawHtml ? '📄 Formatted' : '🔧 Raw HTML'}
+                          </button>
+                        </div>
+                        {renderEmailBody(message.body)}
+                      </div>
                     </div>
                   ))}
                   <div ref={messagesEndRef} />

@@ -5,6 +5,9 @@ import { channelsService, Account } from '../services/channels.service';
 import { gmailService } from '../services/gmail.service';
 import { outlookService } from '../services/outlook.service';
 import { api } from '../config/api';
+import FeatureGuard from '../components/FeatureGuard';
+import UpgradeModal from '../components/UpgradeModal';
+import AddonPurchaseFlow from '../components/AddonPurchaseFlow';
 import './ConnectionsPage.css';
 
 const ConnectionsPage: React.FC = () => {
@@ -17,9 +20,13 @@ const ConnectionsPage: React.FC = () => {
   const [accountIdInput, setAccountIdInput] = useState('');
   const [selectedProvider, setSelectedProvider] = useState<'whatsapp' | 'instagram' | 'email' | 'outlook'>('whatsapp');
   const [selectedEmailProvider, setSelectedEmailProvider] = useState<'gmail' | 'outlook'>('gmail');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showAddonFlow, setShowAddonFlow] = useState(false);
+  const [selectedFeature, setSelectedFeature] = useState<string>('');
   const [userWhatsAppPhone, setUserWhatsAppPhone] = useState<string>('');
 
   useEffect(() => {
+    setError(''); // Clear any previous errors when switching providers
     loadAccounts();
     loadUserCredentials();
   }, [selectedProvider]);
@@ -53,7 +60,14 @@ const ConnectionsPage: React.FC = () => {
       }
       setAccounts(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load accounts');
+      // Only show error for email providers, ignore UniPile errors for WhatsApp/Instagram
+      if (selectedProvider === 'email' || selectedProvider === 'outlook') {
+        setError(err.response?.data?.error || 'Failed to load accounts');
+      } else {
+        // For WhatsApp/Instagram, silently handle UniPile errors
+        console.log('UniPile service unavailable, showing empty state');
+        setAccounts([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -110,7 +124,13 @@ const ConnectionsPage: React.FC = () => {
         <div className="header-content">
           <h1>Social Media Integration</h1>
           <div className="header-actions">
-            <button onClick={() => navigate('/inbox')} className="btn-secondary">
+            <button onClick={() => navigate('/analytics')} className="btn-analytics">
+              📊 Analytics
+            </button>
+            <button onClick={() => navigate('/settings/billing')} className="btn-secondary">
+              💳 Billing
+            </button>
+            <button onClick={() => navigate(`/inbox?provider=${selectedProvider}`)} className="btn-secondary">
               Go to Inbox
             </button>
             <button onClick={logout} className="btn-logout">
@@ -129,18 +149,50 @@ const ConnectionsPage: React.FC = () => {
         {/* Provider Selection */}
         <div className="provider-selection">
           <div className="provider-tabs">
-            <button
-              className={`provider-tab ${selectedProvider === 'whatsapp' ? 'active' : ''}`}
-              onClick={() => setSelectedProvider('whatsapp')}
+            <FeatureGuard 
+              feature="whatsapp"
+              fallback={
+                <button
+                  className="provider-tab locked"
+                  onClick={() => {
+                    setSelectedFeature('whatsapp');
+                    setShowUpgradeModal(true);
+                  }}
+                >
+                  📱 WhatsApp 🔒
+                </button>
+              }
             >
-              📱 WhatsApp
-            </button>
-            <button
-              className={`provider-tab ${selectedProvider === 'instagram' ? 'active' : ''}`}
-              onClick={() => setSelectedProvider('instagram')}
+              <button
+                className={`provider-tab ${selectedProvider === 'whatsapp' ? 'active' : ''}`}
+                onClick={() => setSelectedProvider('whatsapp')}
+              >
+                📱 WhatsApp
+              </button>
+            </FeatureGuard>
+            
+            <FeatureGuard 
+              feature="instagram"
+              fallback={
+                <button
+                  className="provider-tab locked"
+                  onClick={() => {
+                    setSelectedFeature('instagram');
+                    setShowUpgradeModal(true);
+                  }}
+                >
+                  📸 Instagram 🔒
+                </button>
+              }
             >
-              📸 Instagram
-            </button>
+              <button
+                className={`provider-tab ${selectedProvider === 'instagram' ? 'active' : ''}`}
+                onClick={() => setSelectedProvider('instagram')}
+              >
+                📸 Instagram
+              </button>
+            </FeatureGuard>
+            
             <button
               className={`provider-tab ${selectedProvider === 'email' ? 'active' : ''}`}
               onClick={() => setSelectedProvider('email')}
@@ -220,7 +272,7 @@ const ConnectionsPage: React.FC = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => navigate('/inbox')}
+                    onClick={() => navigate(`/inbox?provider=${selectedProvider}`)}
                     className="btn-view"
                   >
                     View Messages
@@ -231,6 +283,26 @@ const ConnectionsPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature={selectedFeature}
+          reason={`${selectedFeature === 'whatsapp' ? 'WhatsApp' : 'Instagram'} integration is not available on your current plan.`}
+          recommendedPlan="growth"
+        />
+      )}
+
+      {/* Add-on Purchase Flow */}
+      {showAddonFlow && (
+        <AddonPurchaseFlow
+          isOpen={showAddonFlow}
+          onClose={() => setShowAddonFlow(false)}
+          preselectedAddon={selectedFeature}
+        />
+      )}
     </div>
   );
 };

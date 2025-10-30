@@ -1,0 +1,467 @@
+.addon-purchase-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.addon-purchase-modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 24px 24px 0 24px;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6c757d;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.progress-step.active .step-number {
+  background: #007bff;
+  color: white;
+}
+
+.progress-step.completed .step-number {
+  background: #28a745;
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.progress-step.active .step-label {
+  color: #007bff;
+}
+
+.progress-line {
+  width: 60px;
+  height: 2px;
+  background: #e9ecef;
+  margin: 0 16px;
+}
+
+.modal-content {
+  padding: 0 24px 24px 24px;
+}
+
+.step-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.step-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: #212529;
+}
+
+.step-header p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.addons-list {
+  display: grid;
+  gap: 20px;
+}
+
+.addon-item {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.addon-item.available:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.addon-item.selected {
+  border-color: #007bff;
+  background: #f8f9ff;
+}
+
+.addon-item.active {
+  border-color: #28a745;
+  background: #f8fff9;
+  cursor: default;
+}
+
+.addon-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.addon-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.addon-info {
+  flex: 1;
+}
+
+.addon-name {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.addon-pricing {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.addon-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.addon-period {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.addon-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+  background: #28a745;
+  color: white;
+}
+
+.status-badge.selected {
+  background: #007bff;
+  color: white;
+}
+
+.addon-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.addon-description {
+  color: #6c757d;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.addon-features h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.addon-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 4px;
+}
+
+.addon-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.feature-check {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.existing-addons-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.existing-addons-section h4 {
+  margin: 0 0 8px 0;
+  color: #212529;
+}
+
+.existing-addons-section p {
+  margin: 0 0 16px 0;
+  color: #6c757d;
+}
+
+.btn-manage {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-manage:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.selected-addons {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.selected-addon-item {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.addon-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.addon-details {
+  flex: 1;
+}
+
+.addon-details h4 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  color: #212529;
+}
+
+.addon-details p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.addon-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.period {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.pricing-summary {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 12px;
+}
+
+.total-price {
+  color: #007bff;
+  font-size: 24px;
+}
+
+.billing-note {
+  color: #6c757d;
+  line-height: 1.4;
+}
+
+.processing-content {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.processing-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.processing-content h3 {
+  margin: 0 0 12px 0;
+  color: #212529;
+}
+
+.processing-content p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.modal-footer {
+  padding: 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-back {
+  background: none;
+  border: 1px solid #6c757d;
+  color: #6c757d;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-continue {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 160px;
+}
+
+.btn-continue:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.btn-continue:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-purchase {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.btn-purchase:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-purchase:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

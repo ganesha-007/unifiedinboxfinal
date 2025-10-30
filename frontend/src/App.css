@@ -18,6 +18,17 @@ body {
   overflow: hidden;
 }
 
+/* Allow scrolling for analytics page */
+body.analytics-page {
+  overflow: auto;
+}
+
+#root.analytics-page {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
 /* Remove default button styles */
 button {
   font-family: inherit;

@@ -1,0 +1,286 @@
+/* Provider Usage Card Component Styles */
+.provider-usage-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.provider-usage-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.provider-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.provider-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.provider-details {
+  flex: 1;
+}
+
+.provider-name {
+  color: #1e293b;
+  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.provider-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-icon {
+  font-size: 0.875rem;
+}
+
+.status-text {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.usage-percentage {
+  color: var(--status-color, #10b981);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.card-content {
+  margin-bottom: 20px;
+}
+
+.usage-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.stat-label {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.usage-progress {
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--status-color, #10b981);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-label {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.usage-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.breakdown-label {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.breakdown-bar {
+  flex: 1;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.breakdown-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.breakdown-fill.sent {
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+}
+
+.breakdown-fill.received {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.breakdown-value {
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+.card-footer {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+.footer-stats {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.footer-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.footer-label {
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.footer-value {
+  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .provider-usage-card {
+    padding: 16px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .usage-percentage {
+    font-size: 1.2rem;
+  }
+  
+  .usage-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .stat-row {
+    padding: 6px 0;
+  }
+  
+  .breakdown-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .breakdown-label {
+    min-width: auto;
+  }
+  
+  .breakdown-value {
+    text-align: left;
+  }
+  
+  .footer-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .provider-usage-card {
+    padding: 12px;
+  }
+  
+  .provider-icon {
+    font-size: 1.5rem;
+  }
+  
+  .provider-name {
+    font-size: 1rem;
+  }
+  
+  .usage-percentage {
+    font-size: 1.1rem;
+  }
+  
+  .stat-value {
+    font-size: 0.8rem;
+  }
+}

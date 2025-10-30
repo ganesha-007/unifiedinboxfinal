@@ -1,0 +1,146 @@
+.admin-limits-loading {
+  padding: 24px;
+}
+
+.admin-limits-container {
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.admin-limits-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+}
+
+.admin-limits-subtitle {
+  color: #8a8a8a;
+  font-size: 13px;
+}
+
+.admin-limits-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 980px) {
+  .admin-limits-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.admin-card {
+  background: var(--card-bg, #121417);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.admin-card-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+
+@media (max-width: 720px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-label {
+  font-size: 13px;
+}
+
+.admin-input {
+  height: 36px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: inherit;
+}
+
+.admin-help {
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+.admin-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.admin-toolbar-field {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-table {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-table-head,
+.admin-table-row {
+  display: grid;
+  grid-template-columns: 200px 140px 140px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.admin-table-head {
+  background: rgba(255,255,255,0.04);
+  font-weight: 600;
+}
+
+.admin-table-row {
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.admin-table-empty {
+  padding: 14px;
+  color: #8a8a8a;
+}
+
+.badge-neutral {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  font-size: 12px;
+}
+
+.truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+

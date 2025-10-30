@@ -11,7 +11,7 @@ export class UniPileService {
   constructor(apiKey?: string, baseURL?: string) {
     // Use provided credentials or fall back to environment variables
     this.apiKey = apiKey || process.env.UNIPILE_API_KEY || '';
-    this.baseURL = baseURL || process.env.UNIPILE_API_URL || 'https://api22.unipile.com:15284/api/v1';
+    this.baseURL = baseURL || process.env.UNIPILE_API_URL || 'https://api14.unipile.com:14429/api/v1';
     
     this.client = axios.create({
       baseURL: this.baseURL,

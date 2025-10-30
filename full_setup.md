@@ -69,6 +69,13 @@ This is a **multi-tenant messaging platform** that allows users to manage WhatsA
    PORT=3001
    ```
 
+   Optional Redis (recommended for caching/queues):
+   ```env
+   REDIS_URL=redis://localhost:6379
+   REDIS_DB=0
+   REDIS_TLS=false
+   ```
+
 5. **Start the application**
    ```bash
    # Terminal 1 - Backend
@@ -112,6 +119,18 @@ If user doesn't have credentials, they'll be redirected to onboarding:
 4. Start sending and receiving messages!
 
 ## 🔧 **Configuration Guide**
+### **Redis Setup**
+
+1. Docker Compose includes a `redis` service. Start the stack:
+   ```bash
+   docker compose up -d redis
+   ```
+2. The backend will use Redis automatically when `REDIS_URL` is set.
+3. The app provides:
+   - Basic cache wrapper: `backend/src/services/cache.ts` (getJson/setJson/del)
+   - KV helpers: `backend/src/services/kv.ts`
+   - `/ready` endpoint validates Redis connectivity when configured.
+
 
 ### **UniPile Setup**
 
