@@ -39,8 +39,8 @@ services:
       DB_NAME: whatsapp_integration
       DB_USER: postgres
       DB_PASSWORD: postgres
-      UNIPILE_API_KEY: sMk7/9XI.mQobpR8vUQXfkfCzTenPhVM9zrb7CAAlJgdV4kev6jY=
-      UNIPILE_API_URL: https://api14.unipile.com:14429/api/v1
+      UNIPILE_API_KEY: ${UNIPILE_API_KEY:-your_unipile_api_key_here}
+      UNIPILE_API_URL: ${UNIPILE_API_URL:-https://api14.unipile.com:14429/api/v1}
       JWT_SECRET: your_jwt_secret_here_change_this
       CORS_ORIGIN: http://localhost:3000
       PRICING_MODE: bundled
