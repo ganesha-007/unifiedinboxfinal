@@ -96,27 +96,20 @@ const UsageChart: React.FC<UsageChartProps> = ({ monthlyUsage, trends }) => {
         <div className="pie-chart-section">
           <h4>Usage Distribution</h4>
           <div className="pie-chart">
-            <div className="pie-chart-container">
-              {monthlyUsage.map((usage, index) => {
-                const percentage = (usage.sent / totalSent) * 100;
-                const rotation = monthlyUsage
-                  .slice(0, index)
-                  .reduce((sum, u) => sum + (u.sent / totalSent) * 360, 0);
-                
-                return (
-                  <div
-                    key={usage.provider}
-                    className="pie-segment"
-                    style={{
-                      '--percentage': percentage,
-                      '--rotation': rotation,
-                      '--color': usageAnalyticsService.getStatusColor(percentage)
-                    } as React.CSSProperties}
-                    title={`${usageAnalyticsService.getProviderDisplayName(usage.provider)}: ${usageAnalyticsService.formatPercentage(percentage)}`}
-                  />
-                );
-              })}
-            </div>
+            <div 
+              className="pie-chart-container"
+              style={{
+                '--pie-gradient': monthlyUsage.reduce((gradient, usage, index) => {
+                  const percentage = (usage.sent / totalSent) * 100;
+                  const startAngle = monthlyUsage
+                    .slice(0, index)
+                    .reduce((sum, u) => sum + (u.sent / totalSent) * 360, 0);
+                  const endAngle = startAngle + (usage.sent / totalSent) * 360;
+                  const color = usageAnalyticsService.getStatusColor(percentage);
+                  return gradient + `${gradient ? ', ' : ''}${color} ${startAngle}deg, ${color} ${endAngle}deg`;
+                }, '')
+              } as React.CSSProperties}
+            />
             <div className="pie-legend">
               {monthlyUsage.map((usage) => {
                 const percentage = (usage.sent / totalSent) * 100;

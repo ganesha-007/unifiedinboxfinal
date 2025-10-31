@@ -31,14 +31,35 @@ export async function createCheckoutSession(req: Request, res: Response) {
 
     const customerId = await getOrCreateCustomerId(userId);
 
+    // Determine which provider is being purchased from price IDs
+    let purchasedProvider: string | null = null;
+    for (const pid of priceIds) {
+      const map = mapPriceToPlanOrAddon(pid);
+      if (map?.type === 'addon' && (map.code === 'whatsapp' || map.code === 'instagram')) {
+        purchasedProvider = map.code;
+        break;
+      }
+    }
+
+    // Add provider to success URL if purchasing an addon
+    let successUrl = CHECKOUT_SUCCESS_URL;
+    if (purchasedProvider) {
+      const separator = CHECKOUT_SUCCESS_URL.includes('?') ? '&' : '?';
+      successUrl = `${CHECKOUT_SUCCESS_URL}${separator}provider=${purchasedProvider}`;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
       line_items: priceIds.map((price) => ({ price, quantity: 1 })),
-      success_url: CHECKOUT_SUCCESS_URL,
+      success_url: successUrl,
       cancel_url: CHECKOUT_CANCEL_URL,
       allow_promotion_codes: true,
       client_reference_id: userId,
+      metadata: {
+        userId,
+        ...(purchasedProvider && { provider: purchasedProvider })
+      },
     });
 
     return res.json({ id: session.id, url: session.url });
@@ -80,6 +101,13 @@ async function syncEntitlementsForSubscription(userId: string, activePriceIds: s
   const providers = new Set<string>();
   if (plan) getPlanIncludedProviders(plan).forEach((p) => providers.add(p));
   addons.forEach((a) => providers.add(a));
+
+  // WhatsApp and Instagram use the same UniPile credentials,
+  // so if user subscribes to one, grant access to both
+  if (providers.has('whatsapp') || providers.has('instagram')) {
+    providers.add('whatsapp');
+    providers.add('instagram');
+  }
 
   // Upsert entitlements per provider
   for (const provider of ['whatsapp', 'instagram', 'email']) {
@@ -204,6 +232,80 @@ export async function getSubscriptionStatus(req: Request, res: Response) {
   } catch (e) {
     console.error('getSubscriptionStatus error', e);
     return res.status(500).json({ error: 'Failed to get subscription status' });
+  }
+}
+
+/**
+ * Manually refresh entitlements for a user by syncing from Stripe
+ */
+export async function refreshEntitlements(req: Request, res: Response) {
+  try {
+    const userId = (req as any).user?.id || (req.body?.userId as string) || (req.query?.userId as string);
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+
+    console.log(`🔄 Manually refreshing entitlements for user ${userId}`);
+
+    // Get Stripe customer ID
+    const customerRes = await pool.query(
+      'SELECT stripe_customer_id FROM billing_customers WHERE user_id = $1',
+      [userId]
+    );
+
+    if (!customerRes.rows[0]?.stripe_customer_id) {
+      return res.status(404).json({ error: 'Stripe customer not found' });
+    }
+
+    const customerId = customerRes.rows[0].stripe_customer_id;
+
+    // Get active subscriptions from Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: 'active',
+      limit: 10
+    });
+
+    if (subscriptions.data.length === 0) {
+      console.log(`⚠️ No active Stripe subscriptions found for user ${userId}`);
+      // Disable all entitlements
+      await pool.query(
+        `UPDATE channels_entitlement SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1`,
+        [userId]
+      );
+      entitlementsCache.invalidate(userId);
+      return res.json({ message: 'No active subscriptions found, entitlements disabled' });
+    }
+
+    // Get all active price IDs from subscriptions
+    const activePriceIds: string[] = [];
+    for (const subscription of subscriptions.data) {
+      const items = subscription.items.data || [];
+      for (const item of items) {
+        if (item.price?.id) {
+          activePriceIds.push(item.price.id);
+        }
+      }
+    }
+
+    console.log(`📋 Found active price IDs for user ${userId}:`, activePriceIds);
+
+    // Sync entitlements
+    await syncEntitlementsForSubscription(userId, activePriceIds);
+    entitlementsCache.invalidate(userId);
+
+    // Get final entitlements
+    const { getEntitlements } = await import('../config/pricing');
+    const entitlements = await getEntitlements(userId, pool);
+
+    console.log(`✅ Refreshed entitlements for user ${userId}:`, entitlements);
+
+    return res.json({
+      success: true,
+      message: 'Entitlements refreshed',
+      entitlements
+    });
+  } catch (e: any) {
+    console.error('refreshEntitlements error:', e);
+    return res.status(500).json({ error: 'Failed to refresh entitlements', details: e.message });
   }
 }
 

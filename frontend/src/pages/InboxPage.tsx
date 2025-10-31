@@ -422,8 +422,21 @@ const InboxPage: React.FC = () => {
         selectedChat.provider_chat_id
       );
       console.log('✅ Messages reloaded');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send message:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      // Show user-friendly error message
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          error.message || 
+                          'Failed to send message. Please try again.';
+      
+      alert(`Error sending message: ${errorMessage}`);
       setMessageInput(messageText); // Restore message on error
     } finally {
       setSending(false);

@@ -121,6 +121,13 @@ export async function getUserUniPileService(userId: string): Promise<UniPileServ
     }
 
     const { unipile_api_key, unipile_api_url } = result.rows[0];
+    
+    // Validate that API key exists and is not empty
+    if (!unipile_api_key || unipile_api_key.trim() === '') {
+      console.warn(`⚠️ Empty or missing UniPile API key for user ${userId}`);
+      return null;
+    }
+    
     return UniPileService.createForUser(unipile_api_key, unipile_api_url);
 
   } catch (error: any) {

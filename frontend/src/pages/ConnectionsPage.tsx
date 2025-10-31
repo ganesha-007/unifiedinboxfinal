@@ -24,16 +24,33 @@ const ConnectionsPage: React.FC = () => {
   const [showAddonFlow, setShowAddonFlow] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<string>('');
   const [userWhatsAppPhone, setUserWhatsAppPhone] = useState<string>('');
+  const [hasCredentials, setHasCredentials] = useState(false);
+  const [connectedAccountsByProvider, setConnectedAccountsByProvider] = useState<{
+    whatsapp: Account[];
+    instagram: Account[];
+  }>({ whatsapp: [], instagram: [] });
+
+  // Load credentials on initial mount
+  useEffect(() => {
+    loadUserCredentials();
+    checkProviderAccess();
+  }, []);
 
   useEffect(() => {
     setError(''); // Clear any previous errors when switching providers
     loadAccounts();
-    loadUserCredentials();
   }, [selectedProvider]);
+
+  // Check which providers have credentials/connections when accounts change
+  useEffect(() => {
+    checkProviderAccess();
+  }, [accounts]);
 
   const loadUserCredentials = async () => {
     try {
       const response = await api.get('/user/credentials');
+      const hasCreds = response.data.hasCredentials && response.data.data?.unipile_api_key;
+      setHasCredentials(hasCreds || false);
       
       if (response.data.hasCredentials && response.data.data.whatsapp_phone_number) {
         const phone = response.data.data.whatsapp_phone_number;
@@ -44,6 +61,26 @@ const ConnectionsPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load user credentials:', error);
+      setHasCredentials(false);
+    }
+  };
+
+  const checkProviderAccess = async () => {
+    try {
+      // Load accounts for WhatsApp and Instagram to check if they're connected
+      try {
+        const whatsappAccounts = await channelsService.getAccounts('whatsapp');
+        const instagramAccounts = await channelsService.getAccounts('instagram');
+        setConnectedAccountsByProvider({
+          whatsapp: whatsappAccounts || [],
+          instagram: instagramAccounts || []
+        });
+      } catch (error) {
+        // Ignore errors - just means no accounts yet
+        console.log('Could not load provider accounts:', error);
+      }
+    } catch (error) {
+      console.error('Failed to check provider access:', error);
     }
   };
 
@@ -149,49 +186,69 @@ const ConnectionsPage: React.FC = () => {
         {/* Provider Selection */}
         <div className="provider-selection">
           <div className="provider-tabs">
-            <FeatureGuard 
-              feature="whatsapp"
-              fallback={
-                <button
-                  className="provider-tab locked"
-                  onClick={() => {
-                    setSelectedFeature('whatsapp');
-                    setShowUpgradeModal(true);
-                  }}
-                >
-                  📱 WhatsApp 🔒
-                </button>
-              }
-            >
+            {/* WhatsApp Tab - Show unlocked if has credentials OR has connected accounts */}
+            {(hasCredentials || connectedAccountsByProvider.whatsapp.length > 0) ? (
               <button
                 className={`provider-tab ${selectedProvider === 'whatsapp' ? 'active' : ''}`}
                 onClick={() => setSelectedProvider('whatsapp')}
               >
                 📱 WhatsApp
               </button>
-            </FeatureGuard>
-            
-            <FeatureGuard 
-              feature="instagram"
-              fallback={
+            ) : (
+              <FeatureGuard 
+                feature="whatsapp"
+                fallback={
+                  <button
+                    className="provider-tab locked"
+                    onClick={() => {
+                      setSelectedFeature('whatsapp');
+                      setShowUpgradeModal(true);
+                    }}
+                  >
+                    📱 WhatsApp 🔒
+                  </button>
+                }
+              >
                 <button
-                  className="provider-tab locked"
-                  onClick={() => {
-                    setSelectedFeature('instagram');
-                    setShowUpgradeModal(true);
-                  }}
+                  className={`provider-tab ${selectedProvider === 'whatsapp' ? 'active' : ''}`}
+                  onClick={() => setSelectedProvider('whatsapp')}
                 >
-                  📸 Instagram 🔒
+                  📱 WhatsApp
                 </button>
-              }
-            >
+              </FeatureGuard>
+            )}
+            
+            {/* Instagram Tab - Show unlocked if has credentials OR has connected accounts */}
+            {(hasCredentials || connectedAccountsByProvider.instagram.length > 0) ? (
               <button
                 className={`provider-tab ${selectedProvider === 'instagram' ? 'active' : ''}`}
                 onClick={() => setSelectedProvider('instagram')}
               >
                 📸 Instagram
               </button>
-            </FeatureGuard>
+            ) : (
+              <FeatureGuard 
+                feature="instagram"
+                fallback={
+                  <button
+                    className="provider-tab locked"
+                    onClick={() => {
+                      setSelectedFeature('instagram');
+                      setShowUpgradeModal(true);
+                    }}
+                  >
+                    📸 Instagram 🔒
+                  </button>
+                }
+              >
+                <button
+                  className={`provider-tab ${selectedProvider === 'instagram' ? 'active' : ''}`}
+                  onClick={() => setSelectedProvider('instagram')}
+                >
+                  📸 Instagram
+                </button>
+              </FeatureGuard>
+            )}
             
             <button
               className={`provider-tab ${selectedProvider === 'email' ? 'active' : ''}`}

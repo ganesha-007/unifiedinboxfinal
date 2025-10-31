@@ -322,7 +322,16 @@ export async function getChats(req: AuthRequest, res: Response) {
     // Fetch fresh data from UniPile
     if (provider === 'whatsapp' || provider === 'instagram') {
       try {
-        const unipileChats = await unipileService.getChats(accountId);
+        // Get user-specific UniPile service
+        const userUniPileService = await getUserUniPileService(userId);
+        if (!userUniPileService) {
+          console.log(`⚠️ No UniPile credentials found for user ${userId}, skipping UniPile chat sync`);
+          // Return database chats only
+          return res.json(dbChats.rows);
+        }
+
+        const unipileChats = await userUniPileService.getChats(accountId);
+        console.log(`📥 Fetched ${unipileChats.length} chats from UniPile for ${provider} account ${accountId}`);
         
         // First, clean up existing duplicates in database by phone number
         // Extract phone number from provider_chat_id and deduplicate by that
@@ -400,6 +409,14 @@ export async function getChats(req: AuthRequest, res: Response) {
             }
           }
           
+          // Store metadata with UniPile chat ID at root level for easy access
+          const chatMetadata = {
+            id: chat.id, // UniPile chat ID - this is what we need for sending messages
+            provider_chat_id: providerChatId,
+            provider_id: chat.provider_id || chat.attendee_provider_id,
+            fullData: chat // Store full chat data for reference
+          };
+          
           await pool.query(
             `INSERT INTO channels_chat (account_id, provider_chat_id, title, last_message_at, metadata)
              VALUES ($1, $2, $3, $4, $5)
@@ -409,7 +426,7 @@ export async function getChats(req: AuthRequest, res: Response) {
                last_message_at = $4, 
                metadata = $5, 
                updated_at = CURRENT_TIMESTAMP`,
-            [dbAccountId, providerChatId, chatTitle, lastMessageAt, JSON.stringify(chat)]
+            [dbAccountId, providerChatId, chatTitle, lastMessageAt, JSON.stringify(chatMetadata)]
           );
         }
       } catch (error) {
@@ -456,7 +473,7 @@ export async function getMessages(req: AuthRequest, res: Response) {
 
     // Get chat from database
     const chatCheck = await pool.query(
-      'SELECT id FROM channels_chat WHERE account_id = $1 AND provider_chat_id = $2',
+      'SELECT id, metadata FROM channels_chat WHERE account_id = $1 AND provider_chat_id = $2',
       [dbAccountId, chatId]
     );
 
@@ -465,6 +482,92 @@ export async function getMessages(req: AuthRequest, res: Response) {
     }
 
     const dbChatId = chatCheck.rows[0].id;
+    let chatMetadata: any = {};
+    try {
+      chatMetadata = typeof chatCheck.rows[0].metadata === 'string' 
+        ? JSON.parse(chatCheck.rows[0].metadata || '{}')
+        : chatCheck.rows[0].metadata || {};
+    } catch (error) {
+      console.warn('Failed to parse chat metadata:', error);
+    }
+
+    // Sync messages from UniPile for WhatsApp/Instagram
+    if (provider === 'whatsapp' || provider === 'instagram') {
+      try {
+        // Get user-specific UniPile service
+        const userUniPileService = await getUserUniPileService(userId);
+        if (userUniPileService) {
+          // Get the UniPile chat ID from metadata or use chatId directly
+          const unipileChatId = chatMetadata.id || chatId;
+          
+          console.log(`🔄 Syncing messages from UniPile for ${provider} chat: ${unipileChatId}`);
+          
+          // Fetch messages from UniPile
+          const unipileMessages = await userUniPileService.getMessages(accountId, unipileChatId, {
+            limit: parseInt(limit as string) || 50,
+            offset: parseInt(offset as string) || 0
+          });
+
+          console.log(`📥 Fetched ${unipileMessages.length} messages from UniPile for chat ${unipileChatId}`);
+
+          // Get user's WhatsApp phone for direction detection (if WhatsApp)
+          let accountOwnerPhone = '';
+          if (provider === 'whatsapp') {
+            const userWhatsAppPhone = await getUserWhatsAppPhone(userId);
+            accountOwnerPhone = userWhatsAppPhone || process.env.WHATSAPP_PHONE_NUMBER || '';
+          }
+
+          // Sync messages to database
+          for (const unipileMsg of unipileMessages) {
+            try {
+              // Determine message direction
+              let messageDirection = 'in'; // Default to incoming
+              
+              if (provider === 'whatsapp') {
+                const senderPhone = unipileMsg.from?.phone || unipileMsg.sender?.attendee_provider_id || '';
+                messageDirection = senderPhone === accountOwnerPhone ? 'out' : 'in';
+              } else if (provider === 'instagram') {
+                // For Instagram, check if sender is account owner
+                const senderId = unipileMsg.sender?.attendee_provider_id || unipileMsg.from?.phone || '';
+                const senderName = unipileMsg.sender?.attendee_name || '';
+                // We'd need account info to check owner, but default to 'in' for now
+                // This could be enhanced by storing account owner info
+                messageDirection = 'in'; // Default to incoming for Instagram
+              }
+
+              // Store message in database
+              await pool.query(
+                `INSERT INTO channels_message (chat_id, provider_msg_id, direction, body, attachments, sent_at)
+                 VALUES ($1, $2, $3, $4, $5, $6)
+                 ON CONFLICT (chat_id, provider_msg_id) 
+                 DO UPDATE SET 
+                   direction = EXCLUDED.direction,
+                   body = EXCLUDED.body,
+                   attachments = EXCLUDED.attachments,
+                   sent_at = EXCLUDED.sent_at,
+                   updated_at = CURRENT_TIMESTAMP`,
+                [
+                  dbChatId,
+                  unipileMsg.id || `unipile_${Date.now()}_${Math.random()}`,
+                  messageDirection,
+                  unipileMsg.body || unipileMsg.text || '',
+                  JSON.stringify(unipileMsg.attachments || []),
+                  unipileMsg.timestamp ? new Date(unipileMsg.timestamp) : new Date()
+                ]
+              );
+            } catch (msgError: any) {
+              console.error(`Failed to sync message ${unipileMsg.id}:`, msgError);
+              // Continue with other messages
+            }
+          }
+
+          console.log(`✅ Synced messages from UniPile for ${provider} chat ${unipileChatId}`);
+        }
+      } catch (error: any) {
+        console.error(`Failed to sync messages from UniPile for ${provider}:`, error);
+        // Continue to return database messages even if sync fails
+      }
+    }
 
     // Get messages from database
     const messages = await pool.query(
@@ -538,32 +641,209 @@ export async function sendMessage(req: AuthRequest, res: Response) {
       console.warn('Failed to parse chat metadata:', error);
       chatMetadata = {};
     }
-    const unipileChatId = chatMetadata.id || chatId; // Use UniPile chat ID from metadata
+    // Determine the correct UniPile chat ID to use
+    // Priority: 1. Chat metadata id (UniPile chat ID), 2. provider_chat_id (if it's a valid UniPile chat ID), 3. chatId param
+    let unipileChatId = chatMetadata.id;
+    
+    // If no id in metadata, check if provider_chat_id might be the UniPile chat ID
+    if (!unipileChatId) {
+      // For WhatsApp, provider_chat_id is usually a phone number, so we need the UniPile chat ID
+      // For Instagram, provider_chat_id might be the username, so we also need the UniPile chat ID
+      // Try to get it from UniPile by fetching chats
+      try {
+        const userUniPileService = await getUserUniPileService(userId);
+        if (userUniPileService) {
+          console.log(`🔍 Looking up UniPile chat ID for provider_chat_id: ${chatCheck.rows[0].provider_chat_id}`);
+          const unipileChats = await userUniPileService.getChats(accountId);
+          
+          // Try to find the chat by provider_chat_id or by matching attendees
+          const matchingChat = unipileChats.find((chat: any) => {
+            const chatProviderId = chat.provider_id || chat.attendee_provider_id;
+            const dbProviderChatId = chatCheck.rows[0].provider_chat_id;
+            
+            // Match by provider_id/attendee_provider_id
+            if (chatProviderId === dbProviderChatId) {
+              return true;
+            }
+            
+            // Match by chat.id (UniPile chat ID)
+            if (chat.id === dbProviderChatId) {
+              return true;
+            }
+            
+            // For Instagram, also check username/name in attendees
+            if (provider === 'instagram') {
+              if (chat.attendees && chat.attendees.length > 0) {
+                const attendee = chat.attendees[0];
+                if (attendee.attendee_name === dbProviderChatId || 
+                    attendee.attendee_provider_id === dbProviderChatId) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          });
+          
+          if (matchingChat) {
+            unipileChatId = matchingChat.id;
+            console.log(`✅ Found UniPile chat ID: ${unipileChatId} for provider_chat_id: ${chatCheck.rows[0].provider_chat_id}`);
+            
+            // Update chat metadata with the UniPile chat ID for future use
+            const updatedMetadata = { 
+              ...chatMetadata, 
+              id: unipileChatId,
+              provider_chat_id: chatCheck.rows[0].provider_chat_id,
+              fullData: matchingChat
+            };
+            await pool.query(
+              'UPDATE channels_chat SET metadata = $1 WHERE id = $2',
+              [JSON.stringify(updatedMetadata), dbChatId]
+            );
+          } else {
+            console.warn(`⚠️ Could not find matching chat in UniPile for provider_chat_id: ${chatCheck.rows[0].provider_chat_id}`);
+            console.warn(`⚠️ Available UniPile chats:`, unipileChats.map((c: any) => ({
+              id: c.id,
+              provider_id: c.provider_id || c.attendee_provider_id,
+              name: c.name
+            })));
+            
+            // Fallback: Try using chatId parameter if it looks like a UniPile chat ID
+            // UniPile chat IDs are typically alphanumeric strings
+            if (chatId && /^[a-zA-Z0-9_-]+$/.test(chatId) && chatId.length > 5) {
+              unipileChatId = chatId;
+              console.log(`⚠️ Using chatId parameter as UniPile chat ID: ${unipileChatId}`);
+              
+              // Try to verify this chat ID exists in UniPile
+              const chatExists = unipileChats.some((c: any) => c.id === chatId);
+              if (!chatExists) {
+                console.error(`❌ Chat ID ${chatId} not found in UniPile chats`);
+                // Try provider_chat_id as last resort
+                unipileChatId = chatCheck.rows[0].provider_chat_id;
+                console.log(`⚠️ Falling back to provider_chat_id: ${unipileChatId}`);
+              }
+            } else {
+              // Last resort: use provider_chat_id directly (might work for some cases)
+              unipileChatId = chatCheck.rows[0].provider_chat_id;
+              console.log(`⚠️ Using provider_chat_id as UniPile chat ID (last resort): ${unipileChatId}`);
+            }
+          }
+        } else {
+          unipileChatId = chatId;
+        }
+      } catch (lookupError: any) {
+        console.error(`⚠️ Failed to lookup UniPile chat ID:`, lookupError);
+        unipileChatId = chatId; // Fallback
+      }
+    }
+
+    console.log(`📤 Determined UniPile chat ID: ${unipileChatId} (from metadata: ${chatMetadata.id}, fallback: ${chatId})`);
+    console.log(`📤 Chat details:`, {
+      dbChatId,
+      providerChatId: chatCheck.rows[0].provider_chat_id,
+      unipileChatId,
+      chatMetadata
+    });
 
     // Send via UniPile
     if (provider === 'whatsapp' || provider === 'instagram') {
       try {
-        console.log(`📤 Sending to UniPile chat ID: ${unipileChatId}`);
-        const result = await unipileService.sendMessage(accountId, unipileChatId, {
+        // Get user-specific UniPile service
+        const userUniPileService = await getUserUniPileService(userId);
+        if (!userUniPileService) {
+          console.error('❌ No UniPile credentials found for user:', userId);
+          return res.status(400).json({ 
+            error: 'No UniPile credentials found', 
+            message: 'Please configure your UniPile API credentials first' 
+          });
+        }
+
+        // Validate that we have a valid chat ID
+        if (!unipileChatId || unipileChatId.trim() === '') {
+          console.error('❌ Invalid UniPile chat ID:', unipileChatId);
+          return res.status(400).json({ 
+            error: 'Invalid chat ID', 
+            message: 'Could not determine the correct UniPile chat ID for sending messages' 
+          });
+        }
+
+        console.log(`📤 Sending ${provider} message via UniPile:`, {
+          userId,
+          accountId,
+          unipileChatId,
+          providerChatId: chatCheck.rows[0].provider_chat_id,
+          body,
+          endpoint: `/chats/${unipileChatId}/messages`
+        });
+
+        const result = await userUniPileService.sendMessage(accountId, unipileChatId, {
           body,
           attachments: attachments || [],
         });
+
+        console.log(`✅ ${provider} message sent successfully:`, result);
 
         // Store in database
         const messageId = result.id || result.message_id || `sent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         await pool.query(
           `INSERT INTO channels_message (chat_id, provider_msg_id, direction, body, attachments, sent_at)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (chat_id, provider_msg_id) DO UPDATE SET
+             body = EXCLUDED.body,
+             attachments = EXCLUDED.attachments,
+             sent_at = EXCLUDED.sent_at,
+             updated_at = CURRENT_TIMESTAMP`,
           [dbChatId, messageId, 'out', body, JSON.stringify(attachments || []), new Date()]
+        );
+
+        // Update chat's last_message_at
+        await pool.query(
+          'UPDATE channels_chat SET last_message_at = $1 WHERE id = $2',
+          [new Date(), dbChatId]
         );
 
         // Update usage
         await updateUsage(userId, provider, 'sent');
 
+        // Emit real-time notification to frontend
+        const io = req.app.get('io');
+        if (io) {
+          const messageData = {
+            id: messageId,
+            body: body,
+            direction: 'out',
+            sent_at: new Date().toISOString(),
+            chat_id: dbChatId,
+            provider_chat_id: chatId
+          };
+          
+          io.to(`user:${userId}`).emit('new_message', {
+            chatId: chatId,
+            message: messageData
+          });
+          
+          io.to(`chat:${chatId}`).emit('new_message', {
+            chatId: chatId,
+            message: messageData
+          });
+          
+          console.log(`📡 Emitted new_message event for sent message to user:${userId} and chat:${chatId}`);
+        }
+
         res.json({ success: true, messageId: messageId, real: true });
       } catch (error: any) {
-        console.error('❌ UniPile send failed:', error.message);
-        res.status(500).json({ error: 'Failed to send message', details: error.message });
+        console.error(`❌ ${provider} send failed:`, error);
+        console.error(`❌ Error details:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
+        res.status(500).json({ 
+          error: 'Failed to send message', 
+          details: error.message,
+          response: error.response?.data 
+        });
       }
     } else {
       res.status(400).json({ error: 'Unsupported provider for sending' });

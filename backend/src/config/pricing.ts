@@ -37,9 +37,15 @@ import { entitlementsCache } from '../services/entitlementsCache';
 
 export async function getEntitlements(userId: string, db: any) {
   const cached = entitlementsCache.get(userId);
-  if (cached) return cached;
+  if (cached) {
+    console.log(`📋 [CACHED] User ${userId} entitlements:`, cached);
+    return cached;
+  }
+  
   const plan = await getUserPlan(userId, db);
   const addons = await getActiveAddons(userId, db);
+  
+  console.log(`📋 User ${userId} - Plan: ${plan}, Addons:`, addons);
   
   const access: Record<string, boolean> = { 
     whatsapp: false, 
@@ -52,6 +58,7 @@ export async function getEntitlements(userId: string, db: any) {
     PLANS[plan as keyof typeof PLANS].includes.forEach((f: string) => {
       if (f in access) {
         access[f] = true;
+        console.log(`✅ Granted ${f} access from plan ${plan}`);
       }
     });
   }
@@ -60,9 +67,25 @@ export async function getEntitlements(userId: string, db: any) {
   addons.forEach((addon: string) => {
     if (addon in access) {
       access[addon] = true;
+      console.log(`✅ Granted ${addon} access from addons`);
     }
   });
 
+  // WhatsApp and Instagram use the same UniPile credentials,
+  // so if user has access to one, grant access to the other
+  const beforeWhatsApp = access.whatsapp;
+  const beforeInstagram = access.instagram;
+  if (access.whatsapp || access.instagram) {
+    access.whatsapp = true;
+    access.instagram = true;
+    if (beforeWhatsApp && !beforeInstagram) {
+      console.log(`✅ Granted Instagram access (linked to WhatsApp)`);
+    } else if (beforeInstagram && !beforeWhatsApp) {
+      console.log(`✅ Granted WhatsApp access (linked to Instagram)`);
+    }
+  }
+
+  console.log(`📋 Final entitlements for user ${userId}:`, access);
   entitlementsCache.set(userId, access);
   return access;
 }
@@ -91,9 +114,10 @@ async function getUserPlan(userId: string, db: any): Promise<string> {
 }
 
 async function getActiveAddons(userId: string, db: any): Promise<string[]> {
+  // Check for both 'addon' and 'plan' sources since subscriptions can create entitlements with either source
   const result = await db.query(
-    'SELECT provider FROM channels_entitlement WHERE user_id = $1 AND is_active = true AND source = $2',
-    [userId, 'addon']
+    'SELECT DISTINCT provider FROM channels_entitlement WHERE user_id = $1 AND is_active = true AND (source = $2 OR source = $3)',
+    [userId, 'addon', 'plan']
   );
   return result.rows.map((row: any) => row.provider);
 }

@@ -19,7 +19,7 @@ export async function initSubscriptionRenewalService() {
   try {
     const redis = getRedis();
     if (!redis) {
-      console.log('⚠️ Redis not available, skipping subscription renewal service initialization');
+      console.log('Redis not available, skipping subscription renewal service initialization');
       return null;
     }
 
@@ -47,7 +47,29 @@ export async function initSubscriptionRenewalService() {
       'graphSubscriptionRenewal',
       async (job: Job<SubscriptionRenewalJobData>) => {
         console.log(`🔄 Processing subscription renewal job ${job.id}:`, job.data);
-        await processSubscriptionRenewal(job.data);
+        
+        // Handle different job types
+        // Check if it's a periodic job (repeatable jobs have names like "repeat:...")
+        const isPeriodicJob = job.name === 'periodicRenewalCheck' || 
+                             (job.name && job.name.startsWith('repeat:') && !job.data?.subscriptionId);
+        
+        if (isPeriodicJob) {
+          // Periodic check job - find all subscriptions needing renewal
+          await checkAndScheduleRenewals();
+        } else if (job.name === 'renewSubscription' || (job.data?.subscriptionId && job.data?.userId)) {
+          // Individual subscription renewal job
+          if (!job.data?.subscriptionId || !job.data?.userId) {
+            console.error(`❌ Invalid job data for renewal job ${job.id}:`, job.data);
+            // Don't throw error, just log and skip - this might be a malformed job
+            console.warn(`⚠️ Skipping renewal job ${job.id} due to missing subscriptionId or userId`);
+            return;
+          }
+          await processSubscriptionRenewal(job.data);
+        } else {
+          console.warn(`⚠️ Unknown job type: ${job.name}, skipping...`);
+          // Don't throw error for unknown job types, just log and skip
+          return;
+        }
       },
       {
         connection: redis,

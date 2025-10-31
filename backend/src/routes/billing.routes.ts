@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
-import { createCheckoutSession, createPortalSession, stripeWebhook, getSubscriptionStatus } from '../controllers/billing.controller';
+import { createCheckoutSession, createPortalSession, stripeWebhook, getSubscriptionStatus, refreshEntitlements } from '../controllers/billing.controller';
+import { authenticate } from '../middleware/auth';
 import { pool } from '../config/database';
 
 const router = Router();
@@ -8,6 +9,7 @@ const router = Router();
 router.post('/checkout/session', createCheckoutSession);
 router.post('/portal/session', createPortalSession);
 router.get('/subscription', getSubscriptionStatus);
+router.post('/refresh-entitlements', authenticate, refreshEntitlements);
 
 // Stripe webhook must use raw body for signature verification
 router.post('/stripe', express.raw({ type: 'application/json' }), (req, res) => stripeWebhook(req as any, res));

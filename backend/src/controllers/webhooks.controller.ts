@@ -221,8 +221,9 @@ export async function handleUniPileMessage(req: any, res: Response) {
       if (chatResult.rows.length === 0) {
         // Create chat metadata with UniPile chat ID
         const chatMetadata = {
-          id: chat_id, // Store the UniPile chat ID
+          id: chat_id, // Store the UniPile chat ID - this is critical for sending messages
           provider_chat_id: actualProviderChatId,
+          provider_id: req.body.provider_chat_id || req.body.sender?.attendee_provider_id || message.from?.phone,
           created_from_webhook: true
         };
         
@@ -233,8 +234,39 @@ export async function handleUniPileMessage(req: any, res: Response) {
           [dbAccountId, actualProviderChatId, message.from?.name || 'Unknown', new Date(message.timestamp), JSON.stringify(chatMetadata)]
         );
         dbChatId = newChat.rows[0].id;
+        console.log(`✅ Created new chat with UniPile chat ID: ${chat_id}, provider_chat_id: ${actualProviderChatId}`);
       } else {
         dbChatId = chatResult.rows[0].id;
+        
+        // Update metadata to ensure UniPile chat ID is stored
+        let existingMetadata: any = {};
+        try {
+          const existingChat = await pool.query(
+            'SELECT metadata FROM channels_chat WHERE id = $1',
+            [dbChatId]
+          );
+          if (existingChat.rows[0]?.metadata) {
+            existingMetadata = typeof existingChat.rows[0].metadata === 'string'
+              ? JSON.parse(existingChat.rows[0].metadata)
+              : existingChat.rows[0].metadata;
+          }
+        } catch (e) {
+          console.warn('Failed to parse existing chat metadata:', e);
+        }
+        
+        // If metadata doesn't have the UniPile chat ID, update it
+        if (!existingMetadata.id || existingMetadata.id !== chat_id) {
+          const updatedMetadata = {
+            ...existingMetadata,
+            id: chat_id, // Ensure UniPile chat ID is stored
+            provider_chat_id: actualProviderChatId
+          };
+          await pool.query(
+            'UPDATE channels_chat SET metadata = $1 WHERE id = $2',
+            [JSON.stringify(updatedMetadata), dbChatId]
+          );
+          console.log(`✅ Updated chat metadata with UniPile chat ID: ${chat_id}`);
+        }
       }
 
       // Determine message direction based on sender and provider

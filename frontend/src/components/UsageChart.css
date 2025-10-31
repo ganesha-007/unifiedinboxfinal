@@ -188,27 +188,16 @@
 }
 
 .pie-chart-container {
-  width: 120px;
-  height: 120px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
+  position: relative;
   background: conic-gradient(
     from 0deg,
-    var(--color, #3b82f6) 0deg,
-    var(--color, #3b82f6) calc(var(--percentage, 0) * 3.6deg),
-    rgba(255, 255, 255, 0.2) calc(var(--percentage, 0) * 3.6deg),
-    rgba(255, 255, 255, 0.2) 360deg
+    var(--pie-gradient, #e2e8f0 0deg, #e2e8f0 360deg)
   );
-  position: relative;
-  transform: rotate(calc(var(--rotation, 0) * -1deg));
-}
-
-.pie-segment {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 50%);
-  background: var(--color, #3b82f6);
+  mask: radial-gradient(circle, transparent 35%, black 35%);
+  -webkit-mask: radial-gradient(circle, transparent 35%, black 35%);
 }
 
 .pie-legend {

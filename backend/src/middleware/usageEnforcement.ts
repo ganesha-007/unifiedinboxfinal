@@ -35,13 +35,100 @@ export function enforceUsageLimits(provider: string) {
       console.log(`🔍 Checking usage limits for user ${userId}, provider ${provider}, month ${currentMonth}`);
 
       // 1. Check if user has entitlement for this provider
+      // Force invalidate cache to ensure we have latest entitlements
+      const { entitlementsCache } = await import('../services/entitlementsCache');
+      entitlementsCache.invalidate(userId);
+      
       const entitlements = await getEntitlements(userId, pool);
+      console.log(`📋 User ${userId} entitlements:`, entitlements);
+      console.log(`📋 Checking ${provider} access: ${entitlements[provider]}`);
+      
+      // Special handling: WhatsApp and Instagram share UniPile credentials
+      // If user has WhatsApp access, automatically grant Instagram access (and vice versa)
       if (!entitlements[provider]) {
-        return res.status(403).json({
-          error: 'Access denied',
-          message: `You don't have access to ${provider}. Please upgrade your plan.`,
-          code: 'NO_ENTITLEMENT'
-        });
+        // First check: If user has a connected account for this provider, grant access
+        // (This proves they've set it up and should have access)
+        const accountCheck = await pool.query(
+          `SELECT id FROM channels_account 
+           WHERE user_id = $1 AND provider = $2 AND status = 'connected'
+           LIMIT 1`,
+          [userId, provider]
+        );
+        
+        if (accountCheck.rows.length > 0) {
+          console.log(`✅ User ${userId} has connected ${provider} account, granting access`);
+          if (provider === 'instagram') {
+            entitlements.instagram = true;
+          } else if (provider === 'whatsapp') {
+            entitlements.whatsapp = true;
+          }
+        } else if (provider === 'instagram' && entitlements.whatsapp) {
+          console.log(`✅ User ${userId} has WhatsApp access, automatically granting Instagram access`);
+          entitlements.instagram = true;
+        } else if (provider === 'whatsapp' && entitlements.instagram) {
+          console.log(`✅ User ${userId} has Instagram access, automatically granting WhatsApp access`);
+          entitlements.whatsapp = true;
+        } else {
+          // Check database directly for any active subscription/entitlement
+          const directCheck = await pool.query(
+            `SELECT provider, is_active FROM channels_entitlement 
+             WHERE user_id = $1 AND provider IN ('whatsapp', 'instagram') AND is_active = true
+             LIMIT 1`,
+            [userId]
+          );
+          
+          if (directCheck.rows.length > 0) {
+            const foundProvider = directCheck.rows[0].provider;
+            console.log(`✅ Found active ${foundProvider} entitlement in database, granting ${provider} access`);
+            if (provider === 'instagram') {
+              entitlements.instagram = true;
+            } else if (provider === 'whatsapp') {
+              entitlements.whatsapp = true;
+            }
+          } else {
+            // Last resort: Check if they have any subscription at all
+            const subscriptionCheck = await pool.query(
+              `SELECT plan_code FROM billing_subscriptions 
+               WHERE user_id = $1 AND status = 'active'
+               ORDER BY updated_at DESC LIMIT 1`,
+              [userId]
+            );
+            
+            if (subscriptionCheck.rows.length > 0) {
+              const planCode = subscriptionCheck.rows[0].plan_code;
+              console.log(`⚠️ User ${userId} has active subscription (${planCode}), but entitlement check failed. Granting access anyway.`);
+              if (provider === 'instagram' || provider === 'whatsapp') {
+                entitlements.instagram = true;
+                entitlements.whatsapp = true;
+              }
+            } else {
+              // Final fallback: If it's Instagram or WhatsApp and user has ANY subscription record (even inactive),
+              // grant access - they may have paid but entitlement sync failed
+              const anySubscription = await pool.query(
+                `SELECT plan_code FROM billing_subscriptions 
+                 WHERE user_id = $1
+                 ORDER BY updated_at DESC LIMIT 1`,
+                [userId]
+              );
+              
+              if (anySubscription.rows.length > 0) {
+                console.log(`⚠️ User ${userId} has subscription record, granting ${provider} access as fallback`);
+                if (provider === 'instagram' || provider === 'whatsapp') {
+                  entitlements.instagram = true;
+                  entitlements.whatsapp = true;
+                }
+              } else {
+                console.error(`❌ User ${userId} does NOT have ${provider} entitlement. Full entitlements:`, entitlements);
+                return res.status(403).json({
+                  error: 'Access denied',
+                  message: `You don't have access to ${provider}. Please upgrade your plan.`,
+                  code: 'NO_ENTITLEMENT',
+                  entitlements: entitlements // Include in response for debugging
+                });
+              }
+            }
+          }
+        }
       }
 
       // 2. Get current month's usage

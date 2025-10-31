@@ -192,43 +192,69 @@
 }
 
 .month-selector label {
-  color: white;
-  font-weight: 500;
-}
-
-.month-selector select {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
+  color: #1e293b;
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
+.month-selector select {
+  background: white;
+  border: 2px solid #3b82f6;
+  color: #1e293b;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.month-selector select:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.month-selector select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
 .month-selector select option {
-  background: #2d3748;
-  color: white;
+  background: white;
+  color: #1e293b;
+  padding: 8px;
 }
 
 .generate-report-button {
   background: linear-gradient(135deg, #10b981, #059669);
-  border: none;
+  border: 2px solid #059669;
   color: white;
   padding: 12px 24px;
   border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  box-shadow: 0 4px 8px rgba(5, 150, 105, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .generate-report-button:hover {
   background: linear-gradient(135deg, #059669, #047857);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border-color: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.5);
+}
+
+.generate-report-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
 }
 
 /* Report Modal */
@@ -395,7 +421,7 @@
   justify-content: center;
   min-height: 400px;
   text-align: center;
-  color: white;
+  color: #1e293b;
 }
 
 .loading-spinner {
