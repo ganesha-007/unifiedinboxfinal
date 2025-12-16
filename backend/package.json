@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
+    "build": "tsc && npm run copy-migrations",
+    "copy-migrations": "node scripts/copy-migrations.js",
     "start": "node dist/index.js",
     "migrate": "node dist/migrations/migrate.js",
     "worker:email": "nodemon src/workers/emailWorker.ts",

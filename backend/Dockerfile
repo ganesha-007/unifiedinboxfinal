@@ -1,12 +1,13 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install system dependencies required for native modules (e.g. @sentry/profiling-node)
+RUN apk add --no-cache python3 make g++ \
+  && npm ci --only=production
 
 # Copy source code
 COPY . .
